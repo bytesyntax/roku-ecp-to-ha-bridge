@@ -2,6 +2,8 @@
 
 This project runs an emulated Roku ECP (External Control Protocol) device on your LAN and maps remote-control button presses (Sofabaton / Harmony-style IP control) to **Home Assistant actions** via **Home Assistant webhooks**.
 
+It is a modified version of https://github.com/logantgt/EcpEmuServer.
+
 Primary use case: control things that *don’t* have a simple REST API (e.g. Zigbee devices), while still using a universal remote that can control “Roku” devices on the network.
 
 ## How it works
