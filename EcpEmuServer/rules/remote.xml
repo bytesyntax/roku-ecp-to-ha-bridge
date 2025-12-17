@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ecpemuserver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <rules>
+	  <rule>
+		  <Name>Up</Name>
+		  <Button>Up</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Up}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Down</Name>
+		  <Button>Down</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Down}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Left</Name>
+		  <Button>Left</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Left}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Right</Name>
+		  <Button>Right</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Right}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Select</Name>
+		  <Button>Select</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Enter}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Back</Name>
+		  <Button>Back</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Escape}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Home</Name>
+		  <Button>Home</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{LWin}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Info</Name>
+		  <Button>Info</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>M</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Fwd</Name>
+		  <Button>Fwd</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>F</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Rev</Name>
+		  <Button>Rev</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>R</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Play</Name>
+		  <Button>Play</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Space}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Volume Up</Name>
+		  <Button>VolumeUp</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Volume_Up}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Volume Down</Name>
+		  <Button>VolumeDown</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Volume_Down}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Volume Mute</Name>
+		  <Button>VolumeMute</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{Volume_Mute}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Switch Window</Name>
+		  <Button>ChannelDown</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{LAlt Down}{Tab}{LAlt Up}</ExData>
+	  </rule>
+	  <rule>
+		  <Name>Switch Window (Reverse)</Name>
+		  <Button>ChannelUp</Button>
+		  <Action>AutoHotKey</Action>
+		  <EndPoint></EndPoint>
+		  <ExData>{LAlt Down}{Shift Down}{Tab}{Shift Up}{LAlt Up}</ExData>
+	  </rule>
+  </rules>
+</ecpemuserver>

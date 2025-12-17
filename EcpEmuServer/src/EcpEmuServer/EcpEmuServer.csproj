@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    AutoHotKey integration is Windows-only. We make both the package reference and the
+    implementation conditional so the project can build/publish for linux/arm64 (Raspberry Pi).
+
+    On non-Windows platforms we compile a stub implementation instead (AutoHotKeyStub.cs).
+  -->
+
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))">
+    <PackageReference Include="AutoHotkey.Interop" Version="1.0.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="!('$(OS)' == 'Windows_NT' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win')))">
+    <Compile Remove="AutoHotKey.cs" />
+    <Compile Include="AutoHotKeyStub.cs" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+services:
+  ecpemuserver:
+    # Option A (recommended): use the published image built by GitHub Actions
+    # image: ghcr.io/<your-github-org-or-user>/ecpemuserver:latest
+    #
+    # Option B: build locally
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ecpemuserver
+
+    # SSDP discovery (UDP multicast on 1900) is significantly more reliable with host networking.
+    network_mode: host
+
+    # Persist config + logs by bind-mounting files/dirs into /app (the container workdir).
+    volumes:
+      - ./rules.xml:/app/rules.xml:ro
+      - ./devicename:/app/devicename:ro
+      - ./logs:/app/logs
+
+    restart: unless-stopped

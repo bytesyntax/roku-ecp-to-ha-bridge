@@ -1,0 +1,60 @@
+# Home Assistant automation examples
+#
+# Purpose:
+#   These webhooks allow an external system (EcpEmuServer) to trigger cover actions
+#   without requiring API auth headers.
+#
+# Setup:
+# 1) In Home Assistant: Settings -> Automations & Scenes -> Automations -> Create -> Edit in YAML
+# 2) Paste the relevant automation(s) below.
+# 3) Choose your own unique webhook_id values.
+# 4) Ensure the entity_id matches your setup (cover.awning_controller per your message).
+#
+# EcpEmuServer will call:
+#   http://<homeassistant-host>:8123/api/webhook/<webhook_id>
+# or via your Nginx Proxy Manager hostname if you want (LAN recommended for reliability).
+
+- id: awning_open_via_webhook
+  alias: "Awning: Open (webhook)"
+  mode: single
+  trigger:
+    - platform: webhook
+      webhook_id: awning_open
+      allowed_methods:
+        - POST
+        - GET
+      local_only: true
+  action:
+    - service: cover.open_cover
+      target:
+        entity_id: cover.awning_controller
+
+- id: awning_close_via_webhook
+  alias: "Awning: Close (webhook)"
+  mode: single
+  trigger:
+    - platform: webhook
+      webhook_id: awning_close
+      allowed_methods:
+        - POST
+        - GET
+      local_only: true
+  action:
+    - service: cover.close_cover
+      target:
+        entity_id: cover.awning_controller
+
+- id: awning_stop_via_webhook
+  alias: "Awning: Stop (webhook)"
+  mode: single
+  trigger:
+    - platform: webhook
+      webhook_id: awning_stop
+      allowed_methods:
+        - POST
+        - GET
+      local_only: true
+  action:
+    - service: cover.stop_cover
+      target:
+        entity_id: cover.awning_controller

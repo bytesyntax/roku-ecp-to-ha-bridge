@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ecpemuserver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <rules>
+    <!--
+      Map Roku ECP buttons to Home Assistant webhook automations.
+
+      You must create matching HA webhook automations, see:
+        example/ha-automations-awning-webhooks.yaml
+
+      If Home Assistant runs on the same host as EcpEmuServer, you can use:
+        http://127.0.0.1:8123/api/webhook/<webhook_id>
+      With host networking, 127.0.0.1 from inside the container points to the host.
+
+      You can also use your Nginx Proxy Manager HTTPS hostname, but LAN/local_only webhooks
+      are recommended for reliability.
+    -->
+
+    <rule>
+      <Name>Awning Open</Name>
+      <Button>Fwd</Button>
+      <Action>HttpGET</Action>
+      <EndPoint>http://127.0.0.1:8123/api/webhook/awning_open</EndPoint>
+      <ExData> </ExData>
+    </rule>
+
+    <rule>
+      <Name>Awning Close</Name>
+      <Button>Rev</Button>
+      <Action>HttpGET</Action>
+      <EndPoint>http://127.0.0.1:8123/api/webhook/awning_close</EndPoint>
+      <ExData> </ExData>
+    </rule>
+
+    <rule>
+      <Name>Awning Stop</Name>
+      <Button>Play</Button>
+      <Action>HttpGET</Action>
+      <EndPoint>http://127.0.0.1:8123/api/webhook/awning_stop</EndPoint>
+      <ExData> </ExData>
+    </rule>
+
+  </rules>
+</ecpemuserver>
