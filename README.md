@@ -1,127 +1,100 @@
-# EcpEmuServer
+# Roku ECP → Home Assistant Bridge (Sofabaton-friendly)
 
-Trigger webhooks from your Logitech Harmony (or other Roku ECP compatible) Universal Remote
+This project runs an emulated Roku ECP (External Control Protocol) device on your LAN and maps remote-control button presses (Sofabaton / Harmony-style IP control) to **Home Assistant actions** via **Home Assistant webhooks**.
 
-EcpEmuServer is a small ASP.NET application which allows you to add an emulated Roku ECP (external control protocol) device to your compatible universal remote in order to trigger webhooks. It is designed as a spiritual successor to [HarmonySpan](https://github.com/ashifter/harmony-span) which provided the same functionality in a Node.js application.
+Primary use case: control things that *don’t* have a simple REST API (e.g. Zigbee devices), while still using a universal remote that can control “Roku” devices on the network.
 
-Compared to HarmonySpan, EcpEmuServer aims to be;
+## How it works
 
- - Faster & Lighter (the .NET 9.0 binary shows significantly less resource usage than its self-contained HarmonySpan equivalent);
- - Easier to deploy, simple to host multiple instances across individual containers on the network (Docker Template coming soon);
- - Easier to configure, with an intuitive rule-based architecture that allows many endpoints to be bound to a single button;
- - Easier to expand and maintain - It does not depend on any third party libraries like the JS version did, and .NET is much more appropriate for this type of application.
+1. The service advertises itself via SSDP multicast as a Roku ECP device (UDP/1900), implemented in [`SSDPManager.StartSSDP()`](src/EcpEmuServer/SSDPManager.cs:9).
+2. Your remote sends Roku ECP keypresses to the service (HTTP/8060), handled in [`Program.Main()`](src/EcpEmuServer/Program.cs:9) at `POST /keypress/{btn}`.
+3. Each `btn` is matched to rules in `rules.xml` and triggers an HTTP `GET` / `POST` to the configured endpoint, implemented in [`RuleManager.Execute()`](src/EcpEmuServer/RuleManager.cs:60).
+4. Those endpoints are Home Assistant **webhook URLs** that fire automations (open/close/stop awning, etc.).
 
-![EcpEmuServer](https://raw.githubusercontent.com/AShifter/EcpEmuServer/dbfbe3673b158127ecf418b5a70fe52c2ada9a96/docs/Window.png)
+Why webhooks: HA service calls normally require auth headers, but the current rules engine is intentionally simple and doesn’t set custom headers. Webhooks avoid that and are ideal for LAN-triggered automations.
 
-## Setup
-Ensure your target system has a recent installation of the [.NET Core 9.0 Runtime and ASP.NET Core Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) which are available from Microsoft's website for many different platforms.
+## Requirements
 
-Download the latest EcpEmuServer binary [from the releases page](https://github.com/logantgt/EcpEmuServer/releases) for your platform.
+- Home Assistant reachable on your LAN (example uses `http://127.0.0.1:8123` when running on the same host with Docker host networking).
+- Docker + Docker Compose on your server (Raspberry Pi 5 / `linux/arm64` supported).
+- Your remote can add/control a “Roku” IP device (Sofabaton X1 supports this via Roku device profiles).
 
-Extract the zip file and run the main executable. *On Linux/macOS machines you might have to run `chmod +x ./EcpEmuServer` on the binary itself to enable the executable flag for that file.* If you are asked for permission to let EcpEmuServer through your OS' firewall, allow it for both private and public networks.
+## Home Assistant setup (webhook automations)
 
-![Windows Defender Firewall Permission Dialogue](https://raw.githubusercontent.com/AShifter/EcpEmuServer/dbfbe3673b158127ecf418b5a70fe52c2ada9a96/docs/Firewall.png)
+Create 3 automations in Home Assistant (open/close/stop). An example file is provided:
 
-On first startup, a simple ``rules.xml`` file will be created that should look something like this; 
+- [`example/ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<ecpemuserver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <rules>
-    <rule>
-      <Name>New Rule</Name>
-      <Button>None</Button>
-      <Action>GET</Action>
-      <EndPoint>https://www.example.com/</EndPoint>
-      <ExData> </ExData>
-    </rule>
-  </rules>
-</ecpemuserver>
-```
+In the example, the webhook IDs are:
+- `awning_open`
+- `awning_close`
+- `awning_stop`
 
-This is where you will be determining how EcpEmuServer should respond to specific button presses on your remote. The fields are defined as;
+And the awning entity is:
+- `cover.awning_controller`
 
- - ``<Name>`` - the Name of your rule. Use this to keep track of all the different rules you create.
- - ``<Button>`` - the [Roku ECP button](https://developer.roku.com/docs/developer-program/debugging/external-control-api.md) bound to this rule. These are the virtual buttons that EcpEmuServer emulates, pretending to be a real Roku device. You can use any of these 15 buttons;
-```
-  Home
-  Rev
-  Fwd
-  Play
-  Select
-  Left
-  Right
-  Down
-  Up
-  Back
-  InstantReplay
-  Info
-  Backspace
-  Search
-  Enter
-```
-These will be available as buttons you can add to Sequences in the Harmony app, and that is how you are meant to integrate rules with your universal remote.
- - ``<Action>`` - The type of action you wish to make with this rule. For most rules, and most APIs, an HTTP ``GET`` request is appropriate, but some endpoints require you to make ``POST`` requests. You can also use the ``Execute`` keyword to tell EcpEmuServer that it will be executing a program on the local system. **NEW**: ``AutoHotKey`` actions will run properly formatted lines of AutoHotKey script directly on the host. (Windows only)
- - ``<EndPoint>`` - the EndPoint of your rule - typically the URL of the webhook/endpoint you want to trigger if making an HTTP request. This can be anything from an IFTTT webhook or a Discord bot to an ESP8266 board or Home Assistant instance within your local network. If you're executing a local program, provide its path here (ex. ``C:\Windows\System32\cmd.exe`` or ``/bin/bash``).
- - ``<ExData>`` - extra data provided to the rule which changes based on the context of the Action and EndPoint. For example, this might be used to provide a body for an HTTP Post, to provide arguements to the application you're executing, or to provide a line of AutoHotKey script to run.
+Adjust those as needed.
 
-Keep in mind that all requests from rules are made from the machine running EcpEmuServer, *not from the remote itself.*
+Security recommendation: keep `local_only: true` on the webhook triggers unless you have a specific reason not to.
 
-EcpEmuServer now ships with a graphical configuration utility which conveniently generates ``rule.xml`` files conforming to this scheme.
+## Service configuration (`rules.xml`)
 
-![Graphical Configuration](https://raw.githubusercontent.com/logantgt/EcpEmuServer/main/doc/config_ui.png)
+Map Roku buttons to HA webhook URLs.
 
-The options here are analoguous to the options available in the XML file. To create a new ``<rule>``, press the large ``+`` button under Add Card.
+An example rules file is provided:
 
-You can bind as many cards to a single ``Button`` as desired. 
+- [`example/rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1)
 
-Once all of your desired configurations have been made, you can export the ``rules.xml`` file by pressing the large ``>`` button under Download ``rules.xml``. This file can replace the ``rules.xml`` that exists in your EcpEmuServer binary directory.
+Example mapping:
+- `Fwd` → open
+- `Rev` → close
+- `Play` → stop
 
-Note that the configuration utility is completely static - it will not load your current configuration, only provide and interface for quickly making a new one. This is by design - it is a security feature.
+If Home Assistant runs on the same machine and you run this container with host networking, you can use:
 
-Example configuration;
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<ecpemuserver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <rules>
-    <rule>
-      <Name>MainTheaterLightsOn</Name>
-      <Button>Pause</Button>
-      <Action>GET</Action>
-      <EndPoint>https://www.fakeapi.com/trigger?key=0123456789&device=MainLightGroup&action=on</EndPoint>
-      <ExData> </ExData>
-    </rule>
-    <rule>
-      <Name>DiscordStatusUpdate</Name>
-      <Button>Pause</Button>
-      <Action>GET</Action>
-      <EndPoint>https://www.fakediscord.com/webhook?token=j89d32jlknd0&whid=md9032m09g94</EndPoint>
-      <ExData> </ExData>
-    </rule>
-    <rule>
-      <Name>MainTheaterLightsOff</Name>
-      <Button>Play</Button>
-      <Action>GET</Action>
-      <EndPoint>https://www.fakeapi.com/trigger?key=0123456789&device=MainLightGroup&action=off</EndPoint>
-      <ExData> </ExData>
-    </rule>
-    <rule>
-      <Name>CloseBlinds</Name>
-      <Button>Play</Button>
-      <Action>GET</Action>
-      <EndPoint>https://www.fakeapi.com/trigger?key=0123456789&device=WindowBlinds&action=close</EndPoint>
-      <ExData> </ExData>
-    </rule>
-    <rule>
-      <Name>SomeLocalScript</Name>
-      <Button>Back</Button>
-      <Action>Execute</Action>
-      <EndPoint>C:\Windows\System32\cmd.exe</EndPoint>
-      <ExData>/C echo "Test"</ExData>
-    </rule>
-  </rules>
-</ecpemuserver>
-```
-To make changes at any time, ensure you have stopped EcpEmuServer before writing to ``rules.xml``.
+- `http://127.0.0.1:8123/api/webhook/<webhook_id>`
 
-Once you have configured EcpEmuServer, and have it running, you can add it to your Harmony Hub just the same as any other IP device. 
+## Run with Docker Compose (recommended)
+
+The included Compose file uses host networking for reliable SSDP multicast discovery:
+
+- [`docker-compose.yml`](docker-compose.yml:1)
+
+Typical steps on your server:
+1. Copy [`example/rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1) to `./rules.xml` and adjust webhook IDs/URLs as needed.
+2. Create a `devicename` file (optional) to control what the remote sees in discovery:
+   - The service reads `./devicename` relative to the container working directory.
+3. Start:
+   - `docker compose up -d`
+
+Notes:
+- Host networking is important because SSDP uses UDP multicast on port 1900.
+- The ECP HTTP endpoint is port 8060.
+
+## Sofabaton setup (high level)
+
+1. Add a new device and choose a Roku device profile (or other Roku ECP compatible profile).
+2. Ensure it discovers the server on your LAN (SSDP).
+3. Map buttons/sequences to Roku keypresses (`Fwd`, `Rev`, `Play`, etc.).
+4. Press buttons → HA webhook automation fires → Zigbee cover action executes.
+
+## GitHub Actions: publish multi-arch image (no local build needed)
+
+A workflow is included to build and publish a multi-arch Docker image to GHCR (amd64 + arm64):
+
+- [`publish-ghcr.yml`](.github/workflows/publish-ghcr.yml:1)
+
+Once your repo’s Actions run, you can reference the published image in Compose instead of building locally (edit [`docker-compose.yml`](docker-compose.yml:1) accordingly).
+
+## Platform notes (Windows-only AutoHotKey)
+
+This codebase includes an AutoHotKey action type intended for Windows. For Linux/ARM container builds, AutoHotKey is made Windows-only and a stub is used on non-Windows platforms:
+
+- [`AutoHotKeyStub.cs`](src/EcpEmuServer/AutoHotKeyStub.cs:1)
+- Package conditioning is in [`EcpEmuServer.csproj`](src/EcpEmuServer/EcpEmuServer.csproj:1)
+
+## Files you’ll most likely edit
+
+- Rules mapping: `rules.xml` (start from [`example/rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1))
+- Home Assistant automation YAML: start from [`example/ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
+- Container run config: [`docker-compose.yml`](docker-compose.yml:1)
