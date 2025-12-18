@@ -8,9 +8,9 @@ Main idea: treat each Roku/ECP keypress as a **generic command**, so you can tri
 
 ## How it works
 
-1. The service advertises itself via SSDP multicast as a Roku ECP device (UDP/1900), implemented in [`SSDPManager.StartSSDP()`](src/EcpEmuServer/SSDPManager.cs:9).
-2. Your remote sends Roku ECP keypresses to the service (HTTP/8060), handled in [`Program.Main()`](src/EcpEmuServer/Program.cs:9) at `POST /keypress/{btn}`.
-3. Each `btn` is matched to rules in `rules.xml` and triggers an HTTP `GET` / `POST` to the configured endpoint, implemented in [`RuleManager.Execute()`](src/EcpEmuServer/RuleManager.cs:60).
+1. The service advertises itself via SSDP multicast as a Roku ECP device (UDP/1900), implemented in [`SSDPManager.StartSSDP()`](src/EcpEmuServer/SSDPManager.cs).
+2. Your remote sends Roku ECP keypresses to the service (HTTP/8060), handled in [`Program.Main()`](src/EcpEmuServer/Program.cs) at `POST /keypress/{btn}`.
+3. Each `btn` is matched to rules in `rules.xml` and triggers an HTTP `GET` / `POST` to the configured endpoint, implemented in [`RuleManager.Execute()`](src/EcpEmuServer/RuleManager.cs).
 
 Why webhooks: HA service calls normally require auth headers, but the current rules engine is intentionally simple and doesn’t set custom headers. Webhooks avoid that and are ideal for LAN-triggered automations.
 
@@ -26,7 +26,7 @@ Home Assistant can route multiple remote-control commands using **one webhook_id
 
 Use this automation template:
 
-- [`ha-automation-ecpemuserver-command-router.yaml`](example/ha-automation-ecpemuserver-command-router.yaml:1)
+- [`ha-automation-ecpemuserver-command-router.yaml`](example/ha-automation-ecpemuserver-command-router.yaml)
 
 It listens on one webhook id:
 - `ecp`
@@ -40,7 +40,7 @@ Security recommendation: keep `local_only: true` on the webhook trigger unless y
 
 Use this rules template:
 
-- [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml:1)
+- [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml)
 
 Pattern:
 - each `<rule>` maps a Roku key name (the `<Button>...</Button>`) to one `cmd=<name>` value
@@ -50,17 +50,17 @@ Pattern:
 
 If you prefer (or if your HA UI makes router automations inconvenient), you can still do one webhook per action. Example files:
 
-- [`ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
-- [`rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1)
+- [`ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml)
+- [`rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml)
 
 ## Run with Docker Compose (recommended)
 
 The included Compose file uses host networking for reliable SSDP multicast discovery:
 
-- [`docker-compose.yml`](docker-compose.yml:1)
+- [`docker-compose.yml`](docker-compose.yml)
 
 Typical steps on your server:
-1. Copy [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml:1) to `./rules.xml` and adjust:
+1. Copy [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml) to `./rules.xml` and adjust:
    - your Home Assistant base URL
    - the `cmd=...` values you want to support
    - the `<Button>...</Button>` values to match what Sofabaton sends (some keys include digits, e.g. `InputHDMI1`)
@@ -84,23 +84,23 @@ Notes:
 
 A workflow is included to build and publish a multi-arch Docker image to GHCR (amd64 + arm64):
 
-- [`publish-ghcr.yml`](.github/workflows/publish-ghcr.yml:1)
+- [`publish-ghcr.yml`](.github/workflows/publish-ghcr.yml)
 
-Once your repo’s Actions run, you can reference the published image in Compose instead of building locally (edit [`docker-compose.yml`](docker-compose.yml:1) accordingly).
+Once your repo’s Actions run, you can reference the published image in Compose instead of building locally (edit [`docker-compose.yml`](docker-compose.yml) accordingly).
 
 ## Platform notes (Windows-only AutoHotKey)
 
 This codebase includes an AutoHotKey action type intended for Windows. For Linux/ARM container builds, AutoHotKey is made Windows-only and a stub is used on non-Windows platforms:
 
-- [`AutoHotKeyStub.cs`](src/EcpEmuServer/AutoHotKeyStub.cs:1)
-- Package conditioning is in [`EcpEmuServer.csproj`](src/EcpEmuServer/EcpEmuServer.csproj:1)
+- [`AutoHotKeyStub.cs`](src/EcpEmuServer/AutoHotKeyStub.cs)
+- Package conditioning is in [`EcpEmuServer.csproj`](src/EcpEmuServer/EcpEmuServer.csproj)
 
 ## Files you’ll most likely edit
 
-- Rules mapping: `rules.xml` (recommended start: [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml:1))
-- Home Assistant automation (router): [`ha-automation-ecpemuserver-command-router.yaml`](example/ha-automation-ecpemuserver-command-router.yaml:1)
-- Container run config: [`docker-compose.yml`](docker-compose.yml:1)
+- Rules mapping: `rules.xml` (recommended start: [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml))
+- Home Assistant automation (router): [`ha-automation-ecpemuserver-command-router.yaml`](example/ha-automation-ecpemuserver-command-router.yaml)
+- Container run config: [`docker-compose.yml`](docker-compose.yml)
 
 Legacy (one-webhook-per-action) examples are still available for reference:
-- [`ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
-- [`rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1)
+- [`ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml)
+- [`rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml)
