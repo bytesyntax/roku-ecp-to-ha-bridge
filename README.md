@@ -2,7 +2,7 @@
 
 This project runs an emulated Roku ECP (External Control Protocol) device on your LAN and maps remote-control button presses (Sofabaton / Harmony-style IP control) to **Home Assistant actions** via **Home Assistant webhooks**.
 
-It is based on [`logantgt/EcpEmuServer`](README.md:5) with Raspberry Pi / container-friendly improvements.
+It is based on [logantgt/EcpEmuServer](https://github.com/logantgt/EcpEmuServer) with Raspberry Pi / container-friendly improvements.
 
 Main idea: treat each Roku/ECP keypress as a **generic command**, so you can trigger *any* Home Assistant action (covers, lights, scripts, scenes, toggles, etc.) from a universal remote that can control “Roku” devices.
 
@@ -60,7 +60,10 @@ The included Compose file uses host networking for reliable SSDP multicast disco
 - [`docker-compose.yml`](docker-compose.yml:1)
 
 Typical steps on your server:
-1. Copy [`example/rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1) to `./rules.xml` and adjust webhook IDs/URLs as needed.
+1. Copy [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml:1) to `./rules.xml` and adjust:
+   - your Home Assistant base URL
+   - the `cmd=...` values you want to support
+   - the `<Button>...</Button>` values to match what Sofabaton sends (some keys include digits, e.g. `InputHDMI1`)
 2. Create a `devicename` file (optional) to control what the remote sees in discovery:
    - The service reads `./devicename` relative to the container working directory.
 3. Start:
@@ -74,8 +77,8 @@ Notes:
 
 1. Add a new device and choose a Roku device profile (or other Roku ECP compatible profile).
 2. Ensure it discovers the server on your LAN (SSDP).
-3. Map buttons/sequences to Roku keypresses (`Fwd`, `Rev`, `Play`, etc.).
-4. Press buttons → HA webhook automation fires → Zigbee cover action executes.
+3. Map physical remote buttons/sequences to Roku keypresses (examples: `Up`, `Down`, `Select`, `VolumeUp`, `InputHDMI1`).
+4. Each keypress triggers the matching `<Button>...</Button>` rule in `rules.xml`, which calls your HA webhook router with `cmd=...`.
 
 ## GitHub Actions: publish multi-arch image (no local build needed)
 
@@ -94,6 +97,10 @@ This codebase includes an AutoHotKey action type intended for Windows. For Linux
 
 ## Files you’ll most likely edit
 
-- Rules mapping: `rules.xml` (start from [`example/rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1))
-- Home Assistant automation YAML: start from [`example/ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
+- Rules mapping: `rules.xml` (recommended start: [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml:1))
+- Home Assistant automation (router): [`ha-automation-ecpemuserver-command-router.yaml`](example/ha-automation-ecpemuserver-command-router.yaml:1)
 - Container run config: [`docker-compose.yml`](docker-compose.yml:1)
+
+Legacy (one-webhook-per-action) examples are still available for reference:
+- [`ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
+- [`rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1)
