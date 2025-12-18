@@ -2,16 +2,15 @@
 
 This project runs an emulated Roku ECP (External Control Protocol) device on your LAN and maps remote-control button presses (Sofabaton / Harmony-style IP control) to **Home Assistant actions** via **Home Assistant webhooks**.
 
-It is a modified version of https://github.com/logantgt/EcpEmuServer.
+It is based on [`logantgt/EcpEmuServer`](README.md:5) with Raspberry Pi / container-friendly improvements.
 
-Primary use case: control things that *don’t* have a simple REST API (e.g. Zigbee devices), while still using a universal remote that can control “Roku” devices on the network.
+Main idea: treat each Roku/ECP keypress as a **generic command**, so you can trigger *any* Home Assistant action (covers, lights, scripts, scenes, toggles, etc.) from a universal remote that can control “Roku” devices.
 
 ## How it works
 
 1. The service advertises itself via SSDP multicast as a Roku ECP device (UDP/1900), implemented in [`SSDPManager.StartSSDP()`](src/EcpEmuServer/SSDPManager.cs:9).
 2. Your remote sends Roku ECP keypresses to the service (HTTP/8060), handled in [`Program.Main()`](src/EcpEmuServer/Program.cs:9) at `POST /keypress/{btn}`.
 3. Each `btn` is matched to rules in `rules.xml` and triggers an HTTP `GET` / `POST` to the configured endpoint, implemented in [`RuleManager.Execute()`](src/EcpEmuServer/RuleManager.cs:60).
-4. Those endpoints are Home Assistant **webhook URLs** that fire automations (open/close/stop awning, etc.).
 
 Why webhooks: HA service calls normally require auth headers, but the current rules engine is intentionally simple and doesn’t set custom headers. Webhooks avoid that and are ideal for LAN-triggered automations.
 
@@ -21,40 +20,38 @@ Why webhooks: HA service calls normally require auth headers, but the current ru
 - Docker + Docker Compose on your server (Raspberry Pi 5 / `linux/arm64` supported).
 - Your remote can add/control a “Roku” IP device (Sofabaton X1 supports this via Roku device profiles).
 
-## Home Assistant setup (webhook automations)
+## Home Assistant setup (recommended: single “command router” automation)
 
-Create 3 automations in Home Assistant (open/close/stop). An example file is provided:
+Home Assistant can route multiple remote-control commands using **one webhook_id** + a query parameter.
 
-- [`example/ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
+Use this automation template:
 
-In the example, the webhook IDs are:
-- `awning_open`
-- `awning_close`
-- `awning_stop`
+- [`ha-automation-ecpemuserver-command-router.yaml`](example/ha-automation-ecpemuserver-command-router.yaml:1)
 
-And the awning entity is:
-- `cover.awning_controller`
+It listens on one webhook id:
+- `ecp`
 
-Adjust those as needed.
+…and routes by query string:
+- `https://<your-ha>/api/webhook/ecp?cmd=<command_name>`
 
-Security recommendation: keep `local_only: true` on the webhook triggers unless you have a specific reason not to.
+Security recommendation: keep `local_only: true` on the webhook trigger unless you intentionally want it reachable outside your LAN.
 
-## Service configuration (`rules.xml`)
+## Service configuration (`rules.xml`) (recommended: map buttons → cmd=...)
 
-Map Roku buttons to HA webhook URLs.
+Use this rules template:
 
-An example rules file is provided:
+- [`rules.ecp-command-router.xml`](example/rules.ecp-command-router.xml:1)
 
-- [`example/rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1)
+Pattern:
+- each `<rule>` maps a Roku key name (the `<Button>...</Button>`) to one `cmd=<name>` value
+- the HA automation routes `cmd` to the actual Home Assistant action(s)
 
-Example mapping:
-- `Fwd` → open
-- `Rev` → close
-- `Play` → stop
+### Legacy option: one HA webhook per action (works, but less scalable)
 
-If Home Assistant runs on the same machine and you run this container with host networking, you can use:
+If you prefer (or if your HA UI makes router automations inconvenient), you can still do one webhook per action. Example files:
 
-- `http://127.0.0.1:8123/api/webhook/<webhook_id>`
+- [`ha-automations-awning-webhooks.yaml`](example/ha-automations-awning-webhooks.yaml:1)
+- [`rules.awning.homeassistant.webhooks.xml`](example/rules.awning.homeassistant.webhooks.xml:1)
 
 ## Run with Docker Compose (recommended)
 
