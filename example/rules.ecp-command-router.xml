@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ecpemuserver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <rules>
+    <!--
+      Generic "command router" approach:
+        - ONE Home Assistant webhook_id: ecp
+        - Pass cmd=<command_name> in query string
+        - A single HA automation routes cmd values to actions
+
+      Home Assistant automation template:
+        example/ha-automation-ecpemuserver-command-router.yaml
+
+      Replace BASE_URL with your HA endpoint (local is recommended).
+      Example:
+        https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_close
+    -->
+
+    <!-- Awning example: map Roku buttons to cmd names -->
+    <rule>
+      <Name>Cmd.Awning.Open</Name>
+      <Button>Up</Button>
+      <Action>HttpGET</Action>
+      <EndPoint>https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_open</EndPoint>
+      <ExData> </ExData>
+    </rule>
+
+    <rule>
+      <Name>Cmd.Awning.Close</Name>
+      <Button>Down</Button>
+      <Action>HttpGET</Action>
+      <EndPoint>https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_close</EndPoint>
+      <ExData> </ExData>
+    </rule>
+
+    <rule>
+      <Name>Cmd.Awning.Stop</Name>
+      <Button>Select</Button>
+      <Action>HttpGET</Action>
+      <EndPoint>https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_stop</EndPoint>
+      <ExData> </ExData>
+    </rule>
+
+    <!-- Add more by copying a rule and changing Button + cmd=... -->
+
+  </rules>
+</ecpemuserver>

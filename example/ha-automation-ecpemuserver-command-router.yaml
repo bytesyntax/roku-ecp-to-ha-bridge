@@ -1,0 +1,83 @@
+# Home Assistant: Single automation to route ALL EcpEmuServer-triggered commands
+#
+# Goal:
+#   Use ONE webhook + ONE automation, and route to different actions based on a query parameter.
+#
+# How it is called:
+#   https://homeassistant.example.com/api/webhook/ecp?cmd=awning_close
+#   https://homeassistant.example.com/api/webhook/ecp?cmd=movie_mode
+#
+# Notes:
+# - EcpEmuServer rules are simple HTTP GET/POST to a URL. Query strings work great.
+# - Keep local_only: true if you only need LAN access.
+# - Add more routes by adding more "choose" branches.
+#
+alias: "EcpEmuServer Command Router"
+description: "Routes Roku ECP keypresses (via EcpEmuServer rules.xml) to Home Assistant actions using cmd=<name>."
+triggers:
+  - webhook_id: ecp
+    allowed_methods:
+      - GET
+      - POST
+    local_only: true
+    trigger: webhook
+
+actions:
+  - variables:
+      cmd: "{{ (trigger.query.cmd | default('')) | string | lower }}"
+
+  - choose:
+      #
+      # ---- Example: Awning (your original use case) ----
+      #
+      - conditions:
+          - condition: template
+            value_template: "{{ cmd == 'awning_open' }}"
+        sequence:
+          - target:
+              entity_id: cover.awning_controller
+            action: cover.open_cover
+
+      - conditions:
+          - condition: template
+            value_template: "{{ cmd == 'awning_close' }}"
+        sequence:
+          - target:
+              entity_id: cover.awning_controller
+            action: cover.close_cover
+
+      - conditions:
+          - condition: template
+            value_template: "{{ cmd == 'awning_stop' }}"
+        sequence:
+          - target:
+              entity_id: cover.awning_controller
+            action: cover.stop_cover
+
+      #
+      # ---- Example: Scene / script / toggle patterns ----
+      # (Uncomment and adjust entity_ids if you want these.)
+      #
+      # - conditions:
+      #     - condition: template
+      #       value_template: "{{ cmd == 'movie_mode' }}"
+      #   sequence:
+      #     - target:
+      #         entity_id: scene.movie_mode
+      #       action: scene.turn_on
+      #
+      # - conditions:
+      #     - condition: template
+      #       value_template: "{{ cmd == 'lights_toggle' }}"
+      #   sequence:
+      #     - target:
+      #         entity_id: light.living_room
+      #       action: light.toggle
+
+    default:
+      - action: system_log.write
+        data:
+          level: warning
+          message: "EcpEmuServer Command Router: unknown cmd='{{ cmd }}' (raw query: {{ trigger.query | tojson }})"
+
+mode: single
