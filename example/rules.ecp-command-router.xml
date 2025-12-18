@@ -20,7 +20,7 @@
       <Name>Cmd.Awning.Open</Name>
       <Button>Up</Button>
       <Action>HttpGET</Action>
-      <EndPoint>https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_open</EndPoint>
+      <EndPoint>http://127.0.0.1:8123/api/webhook/ecp?cmd=awning_open</EndPoint>
       <ExData> </ExData>
     </rule>
 
@@ -28,7 +28,7 @@
       <Name>Cmd.Awning.Close</Name>
       <Button>Down</Button>
       <Action>HttpGET</Action>
-      <EndPoint>https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_close</EndPoint>
+      <EndPoint>http://127.0.0.1:8123/api/webhook/ecp?cmd=awning_close</EndPoint>
       <ExData> </ExData>
     </rule>
 
@@ -36,7 +36,7 @@
       <Name>Cmd.Awning.Stop</Name>
       <Button>Select</Button>
       <Action>HttpGET</Action>
-      <EndPoint>https://homeassistant.bytesyntax.it/api/webhook/ecp?cmd=awning_stop</EndPoint>
+      <EndPoint>http://127.0.0.1:8123/api/webhook/ecp?cmd=awning_stop</EndPoint>
       <ExData> </ExData>
     </rule>
 
