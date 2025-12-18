@@ -48,7 +48,10 @@ namespace EcpEmuServer
                 return Results.Content("<apps></apps>", "application/xml");
             });
 
-            app.MapPost("/keypress/{btn:alpha}", (string btn) =>
+            // NOTE:
+            // Some Roku/ECP key names include digits (e.g. InputHDMI1/InputHDMI2).
+            // The previous ':alpha' constraint caused these to 404 and never reach RuleManager.
+            app.MapPost("/keypress/{btn}", (string btn) =>
             {
                 Logger.Log(Logger.LogSeverity.info, $"Got button press {btn}");
 
