@@ -1,28 +1,23 @@
-# Home Assistant automation examples
+# Home Assistant automation example (legacy style)
 #
-# Purpose:
-#   These webhooks allow an external system (EcpEmuServer) to trigger cover actions
-#   without requiring API auth headers.
+# This file is kept for backwards compatibility/documentation:
+#   - one webhook per action (open/close/stop)
 #
-# Setup:
-# 1) In Home Assistant: Settings -> Automations & Scenes -> Automations -> Create -> Edit in YAML
-# 2) Paste the relevant automation(s) below.
-# 3) Choose your own unique webhook_id values.
-# 4) Ensure the entity_id matches your setup (cover.awning_controller per your message).
+# Recommended scalable approach:
+#   - one webhook + one automation that routes cmd=<name>
+#   - see: example/ha-automation-ecpemuserver-command-router.yaml
 #
-# EcpEmuServer will call:
-#   http://<homeassistant-host>:8123/api/webhook/<webhook_id>
-# or via your Nginx Proxy Manager hostname if you want (LAN recommended for reliability).
+# NOTE: Some Home Assistant UIs only allow ONE automation per YAML file.
+# If that is your case, do NOT use this multi-automation list format.
+# Instead use the single router automation above.
 
 - id: awning_open_via_webhook
-  alias: "Awning: Open (webhook)"
+  alias: "Awning: Open (webhook, legacy)"
   mode: single
   trigger:
     - platform: webhook
       webhook_id: awning_open
-      allowed_methods:
-        - POST
-        - GET
+      allowed_methods: [POST, GET]
       local_only: true
   action:
     - service: cover.open_cover
@@ -30,14 +25,12 @@
         entity_id: cover.awning_controller
 
 - id: awning_close_via_webhook
-  alias: "Awning: Close (webhook)"
+  alias: "Awning: Close (webhook, legacy)"
   mode: single
   trigger:
     - platform: webhook
       webhook_id: awning_close
-      allowed_methods:
-        - POST
-        - GET
+      allowed_methods: [POST, GET]
       local_only: true
   action:
     - service: cover.close_cover
@@ -45,14 +38,12 @@
         entity_id: cover.awning_controller
 
 - id: awning_stop_via_webhook
-  alias: "Awning: Stop (webhook)"
+  alias: "Awning: Stop (webhook, legacy)"
   mode: single
   trigger:
     - platform: webhook
       webhook_id: awning_stop
-      allowed_methods:
-        - POST
-        - GET
+      allowed_methods: [POST, GET]
       local_only: true
   action:
     - service: cover.stop_cover

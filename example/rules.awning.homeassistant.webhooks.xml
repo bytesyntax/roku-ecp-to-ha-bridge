@@ -2,17 +2,24 @@
 <ecpemuserver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <rules>
     <!--
-      Map Roku ECP buttons to Home Assistant webhook automations.
+      Legacy (one-webhook-per-action) example.
 
-      You must create matching HA webhook automations, see:
-        example/ha-automations-awning-webhooks.yaml
+      This maps Roku ECP buttons directly to specific Home Assistant webhooks:
+        /api/webhook/awning_open
+        /api/webhook/awning_close
+        /api/webhook/awning_stop
 
-      If Home Assistant runs on the same host as EcpEmuServer, you can use:
-        http://127.0.0.1:8123/api/webhook/<webhook_id>
-      With host networking, 127.0.0.1 from inside the container points to the host.
+      Some Home Assistant UIs only allow ONE automation per YAML file; if so, prefer the
+      scalable “command router” approach instead:
 
-      You can also use your Nginx Proxy Manager HTTPS hostname, but LAN/local_only webhooks
-      are recommended for reliability.
+        - HA single automation: example/ha-automation-ecpemuserver-command-router.yaml
+        - rules.xml template:  example/rules.ecp-command-router.xml
+
+      Notes:
+      - If Home Assistant runs on the same host and you use Docker host networking,
+        127.0.0.1 from inside the container points to the host.
+      - You can also use your external/Nginx Proxy Manager URL (e.g. https://homeassistant.example),
+        but LAN + local_only webhooks are recommended when possible.
     -->
 
     <rule>
